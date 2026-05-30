@@ -9,6 +9,9 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
+# Note: Ensure PYTHONPATH includes the current directory
+export PYTHONPATH=$PYTHONPATH:.
+
 python scripts/init_db.py
 python scripts/create_api_key.py "Test Merchant"
 uvicorn app.main:app --reload
