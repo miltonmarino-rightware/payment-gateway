@@ -20,7 +20,9 @@ def charge(payload:ChargeRequest, request:Request, db:Session=Depends(get_db), a
     if existing: return existing.response_body
     response=PaymentService(db).charge(payload); body=response.model_dump()
     idem.store(api_key.id, idempotency_key, payload_hash, body, 200, response.transaction_id)
-    AuditService(db).record("charge_created", "transaction", response.transaction_id, api_key.id, {"status": response.status})
+    ip_address = getattr(request.state, 'client_ip', None)
+    user_agent = getattr(request.state, 'user_agent', None)
+    AuditService(db).record("charge_created", "transaction", response.transaction_id, api_key.id, {"status": response.status}, ip_address, user_agent)
     return response
 @router.get("/{transaction_id}", response_model=TransactionResponse)
 def get_transaction(transaction_id:str, db:Session=Depends(get_db), _api_key=Depends(require_api_key)):
