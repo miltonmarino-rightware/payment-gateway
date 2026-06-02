@@ -7,8 +7,17 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.middleware.request_id import RequestIdMiddleware
 
+def validate_config():
+    from app.core.config import get_settings
+    settings = get_settings()
+    # Ensure critical secrets are not using defaults in production
+    if settings.app_env == "production":
+        if "change-me" in settings.api_key_pepper:
+            raise ValueError("API_KEY_PEPPER must be changed in production")
+
 def create_app() -> FastAPI:
     configure_logging()
+    validate_config()
     app=FastAPI(title="RightWare Payment Gateway", version="0.2.0")
     app.add_middleware(RequestIdMiddleware)
     register_error_handlers(app)
