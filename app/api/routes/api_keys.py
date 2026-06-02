@@ -6,7 +6,7 @@ from app.schemas.api_key import CreateApiKeyRequest, CreateApiKeyResponse, ApiKe
 from app.services.api_key_service import ApiKeyService
 router=APIRouter(prefix="/api/v1/api-keys", tags=["api-keys"])
 @router.post("", response_model=CreateApiKeyResponse)
-def create_api_key(payload:CreateApiKeyRequest, db:Session=Depends(get_db)):
+def create_api_key(payload:CreateApiKeyRequest, db:Session=Depends(get_db), _api_key=Depends(require_api_key)):
     row, generated=ApiKeyService(db).create(payload.name, payload.processor_scope)
     return CreateApiKeyResponse(id=row.id, name=row.name, prefix=row.prefix, api_key=generated.plain)
 @router.get("", response_model=list[ApiKeyListItem])
