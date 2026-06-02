@@ -25,12 +25,14 @@ def charge(payload:ChargeRequest, request:Request, db:Session=Depends(get_db), a
     AuditService(db).record("charge_created", "transaction", response.transaction_id, api_key.id, {"status": response.status}, ip_address, user_agent)
     return response
 @router.get("/{transaction_id}", response_model=TransactionResponse)
-def get_transaction(transaction_id:str, db:Session=Depends(get_db), _api_key=Depends(require_api_key)):
+def get_transaction(transaction_id:str, request:Request, db:Session=Depends(get_db), api_key=Depends(require_api_key)):
+    check_rate_limit(request, api_key.id)
     txn=db.query(Transaction).filter(Transaction.id==transaction_id).first()
     if not txn: raise AppError("transaction_not_found", "Transaction not found.", 404)
     return txn
 @router.get("/{transaction_id}/status")
-def get_transaction_status(transaction_id:str, db:Session=Depends(get_db), _api_key=Depends(require_api_key)):
+def get_transaction_status(transaction_id:str, request:Request, db:Session=Depends(get_db), api_key=Depends(require_api_key)):
+    check_rate_limit(request, api_key.id)
     txn=db.query(Transaction).filter(Transaction.id==transaction_id).first()
     if not txn: raise AppError("transaction_not_found", "Transaction not found.", 404)
     return {"transaction_id":txn.id,"status":txn.status}
