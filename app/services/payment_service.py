@@ -10,7 +10,17 @@ class PaymentService:
         txn=Transaction(reference=reference, amount=payload.amount, currency=payload.currency.upper(), status="processing", processor=payload.processor, payment_method_id=payload.payment_method_id, metadata_json=payload.metadata)
         self.db.add(txn); self.db.flush()
         result=processor.charge(payload.amount, payload.currency.upper(), payload.payment_method_id, payload.metadata)
-        txn.status=result.status; txn.processor_transaction_id=result.processor_transaction_id; txn.card_brand=result.card_brand; txn.card_last_four=result.card_last_four; txn.failure_code=result.failure_code; txn.failure_message_safe=result.failure_message_safe; txn.requires_action=result.requires_action; txn.next_action_type=result.next_action_type
+        
+        # Valid status transitions: only update if current status is 'processing'
+        if txn.status == "processing":
+            txn.status=result.status
+            txn.processor_transaction_id=result.processor_transaction_id
+            txn.card_brand=result.card_brand
+            txn.card_last_four=result.card_last_four
+            txn.failure_code=result.failure_code
+            txn.failure_message_safe=result.failure_message_safe
+            txn.requires_action=result.requires_action
+            txn.next_action_type=result.next_action_type
         
         if txn.status == "failed":
             from app.services.security_service import SecurityService
